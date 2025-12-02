@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.UserMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.demo.entity.User">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="username" property="username" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+        <result column="role" property="role" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="login_status" property="loginStatus" jdbcType="VARCHAR"/>
+        <result column="last_login_time" property="lastLoginTime" jdbcType="TIMESTAMP"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础列名 -->
+    <sql id="Base_Column_List">
+        id, username, email, password, phone, role, status, login_status,
+        last_login_time, created_time, updated_time
+    </sql>
+
+    <!-- 根据ID查询用户 -->
+    <select id="selectById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户名查询用户 -->
+    <select id="selectByUsername" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <!-- 根据邮箱查询用户 -->
+    <select id="selectByEmail" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+    <!-- 查询所有用户 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据条件查询用户 -->
+    <select id="selectByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        <where>
+            <if test="username != null and username != ''">
+                AND username LIKE CONCAT('%', #{username}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND email LIKE CONCAT('%', #{email}, '%')
+            </if>
+            <if test="role != null and role != ''">
+                AND role = #{role}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="loginStatus != null and loginStatus != ''">
+                AND login_status = #{loginStatus}
+            </if>
+            <if test="phone != null and phone != ''">
+                AND phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 插入用户 -->
+    <insert id="insert" parameterType="com.example.demo.entity.User"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (
+            username, email, password, phone, role, status,
+            login_status, last_login_time, created_time, updated_time
+        ) VALUES (
+                     #{username}, #{email}, #{password}, #{phone}, #{role}, #{status},
+                     #{loginStatus}, #{lastLoginTime}, #{createdTime}, #{updatedTime}
+                 )
+    </insert>
+
+    <!-- 更新用户 -->
+    <update id="update" parameterType="com.example.demo.entity.User">
+        UPDATE users
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="loginStatus != null">login_status = #{loginStatus},</if>
+            <if test="lastLoginTime != null">last_login_time = #{lastLoginTime},</if>
+            updated_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除用户 -->
+    <delete id="deleteById" parameterType="java.lang.Integer">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <!-- 根据用户名和密码查询用户 -->
+    <select id="selectByUsernameAndPassword" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE username = #{username} AND password = #{password}
+    </select>
+
+    <!-- 根据角色查询用户 -->
+    <select id="selectByRole" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE role = #{role}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据状态查询用户 -->
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE status = #{status}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 更新用户登录状态 -->
+    <update id="updateLoginStatus">
+        UPDATE users
+        SET login_status = #{loginStatus}, updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新最后登录时间 -->
+    <update id="updateLastLoginTime" parameterType="java.lang.Long">
+        UPDATE users
+        SET last_login_time = NOW(), updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 检查用户名是否存在 -->
+    <select id="existsByUsername" parameterType="java.lang.String" resultType="boolean">
+        SELECT COUNT(1) > 0 FROM users WHERE username = #{username}
+    </select>
+
+    <!-- 检查邮箱是否存在 -->
+    <select id="existsByEmail" parameterType="java.lang.String" resultType="boolean">
+        SELECT COUNT(1) > 0 FROM users WHERE email = #{email}
+    </select>
+
+    <!-- 分页查询用户 -->
+    <select id="selectByPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        ORDER BY created_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 统计用户数量 -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(1) FROM users
+    </select>
+
+</mapper>

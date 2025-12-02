@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.BookMapper">
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.demo.entity.Book">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="author" property="author" jdbcType="VARCHAR"/>
+        <result column="isbn" property="isbn" jdbcType="VARCHAR"/>
+        <result column="publisher" property="publisher" jdbcType="VARCHAR"/>
+        <result column="publish_date" property="publishDate" jdbcType="DATE"/>
+        <result column="category" property="category" jdbcType="VARCHAR"/>
+        <result column="price" property="price" jdbcType="DECIMAL"/>
+        <result column="total_copies" property="totalCopies" jdbcType="INTEGER"/>
+        <result column="available_copies" property="availableCopies" jdbcType="INTEGER"/>
+        <result column="description" property="description" jdbcType="LONGVARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <!-- 基础列名 -->
+    <sql id="Base_Column_List">
+        id, title, author, isbn, publisher, publish_date, category,
+    price, total_copies, available_copies, description, created_time
+    </sql>
+
+    <!-- 插入书籍 -->
+    <insert id="addBook" parameterType="com.example.demo.entity.Book"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO books (
+            title, author, isbn, publisher, publish_date, category,
+            price, total_copies, available_copies, description, created_time
+        ) VALUES (
+                     #{title}, #{author}, #{isbn}, #{publisher}, #{publishDate}, #{category},
+                     #{price}, #{totalCopies}, #{availableCopies}, #{description}, #{createdTime}
+                 )
+    </insert>
+
+    <!-- 更新书籍 -->
+    <update id="updateBook" parameterType="com.example.demo.entity.Book">
+        UPDATE books
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="isbn != null">isbn = #{isbn},</if>
+            <if test="publisher != null">publisher = #{publisher},</if>
+            <if test="publishDate != null">publish_date = #{publishDate},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="totalCopies != null">total_copies = #{totalCopies},</if>
+            <if test="availableCopies != null">available_copies = #{availableCopies},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="createdTime != null">created_time = #{createdTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除书籍 -->
+    <delete id="deleteBook" parameterType="java.lang.Integer">
+        DELETE FROM books WHERE id = #{id}
+    </delete>
+
+    <select id="getBookById" parameterType="java.lang.Integer" resultType="com.example.demo.entity.Book">
+        select
+        <include refid="Base_Column_List"/>
+        from books
+        where id = #{id}
+    </select>
+
+    <select id="getBookByCategory" parameterType="java.lang.Integer" resultType="com.example.demo.entity.Book">
+        select
+        <include refid="Base_Column_List"/>
+        from books
+        where category = #{category}
+    </select>
+
+    <!-- 更新书籍 -->
+    <update id="updateBookCopies" parameterType="com.example.demo.entity.Book">
+        UPDATE books
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="isbn != null">isbn = #{isbn},</if>
+            <if test="publisher != null">publisher = #{publisher},</if>
+            <if test="publishDate != null">publish_date = #{publishDate},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="totalCopies != null">total_copies = #{totalCopies},</if>
+            <if test="availableCopies != null">available_copies = #{availableCopies},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="createdTime != null">created_time = #{createdTime},</if>
+            updated_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 减少库存 -->
+    <update id="decreaseAvailableCopies">
+        UPDATE books
+        SET available_copies = available_copies - #{count}
+        WHERE id = #{bookId}
+        AND available_copies >= #{count}  <!-- 防止负数 -->
+    </update>
+
+    <!-- 增加库存 -->
+    <update id="increaseAvailableCopies">
+        UPDATE books
+        SET available_copies = available_copies + #{count}
+        WHERE id = #{bookId}
+    </update>
+
+    <!-- 同时更新总库存和可用库存 -->
+    <update id="updateCopies">
+        UPDATE books
+        SET total_copies = total_copies + #{totalChange},
+        available_copies = available_copies + #{availableChange}
+        WHERE id = #{bookId}
+        AND available_copies + #{availableChange} >= 0  <!-- 避免负数 -->
+        AND total_copies + #{totalChange} >= 0
+    </update>
+</mapper>

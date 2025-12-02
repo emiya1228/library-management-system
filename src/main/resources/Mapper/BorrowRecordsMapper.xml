@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.BorrowRecordsMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.demo.entity.BorrowRecord">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="user_id" property="userId" jdbcType="INTEGER"/>
+        <result column="book_id" property="bookId" jdbcType="INTEGER"/>
+        <result column="borrow_date" property="borrowDate" jdbcType="TIMESTAMP"/>
+        <result column="due_date" property="dueDate" jdbcType="DATE"/>
+        <result column="return_date" property="returnDate" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="renew_count" property="renewCount" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 基础列名 -->
+    <sql id="Base_Column_List">
+        id, user_id, book_id, borrow_date, due_date, return_date, status, renew_count
+    </sql>
+
+    <!-- 根据ID查询借阅记录 -->
+    <select id="selectById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM borrow_records
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID查询借阅记录 -->
+    <select id="selectByUserId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM borrow_records
+        WHERE user_id = #{userId}
+        ORDER BY borrow_date DESC
+    </select>
+
+    <!-- 根据图书ID查询借阅记录 -->
+    <select id="selectByBookId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM borrow_records
+        WHERE book_id = #{bookId}
+        ORDER BY borrow_date DESC
+    </select>
+
+    <!-- 插入借阅记录 -->
+    <insert id="insert" parameterType="com.example.demo.entity.BorrowRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO borrow_records (
+            user_id, book_id, borrow_date, due_date, return_date, status, renew_count
+        ) VALUES (
+            #{userId}, #{bookId}, #{borrowDate}, #{dueDate}, #{returnDate}, #{status}, #{renewCount}
+        )
+    </insert>
+
+    <!-- 更新借阅记录 -->
+    <update id="update" parameterType="com.example.demo.entity.BorrowRecord">
+        UPDATE borrow_records
+        <set>
+            <if test="returnDate != null">return_date = #{returnDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="renewCount != null">renew_count = #{renewCount},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 归还图书 -->
+    <update id="returnBook">
+        UPDATE borrow_records
+        SET return_date = NOW(), status = '已归还'
+        WHERE id = #{recordId} AND return_date IS NULL
+    </update>
+
+    <!-- 续借图书 -->
+    <update id="renewBook">
+        UPDATE borrow_records
+        SET due_date = DATE_ADD(due_date, INTERVAL 15 DAY),
+            renew_count = renew_count + 1
+        WHERE id = #{recordId} AND renew_count = 0
+    </update>
+
+    <!-- 查询用户当前借阅中的图书 -->
+    <select id="selectCurrentBorrowsByUserId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM borrow_records
+        WHERE user_id = #{userId} AND status = '借阅中'
+        ORDER BY due_date ASC
+    </select>
+
+    <!-- 查询逾期记录 -->
+    <select id="selectOverdueRecords" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM borrow_records
+        WHERE status = '借阅中' AND due_date <![CDATA[ < ]]> CURDATE()
+        ORDER BY due_date ASC
+    </select>
+
+    <!-- 统计用户借阅数量 -->
+    <select id="countUserBorrows" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM borrow_records
+        WHERE user_id = #{userId} AND status = '借阅中'
+    </select>
+
+</mapper>
