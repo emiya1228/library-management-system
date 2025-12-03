@@ -74,6 +74,46 @@
         where category = #{category}
     </select>
 
+    <select id="getCategoryByUserId" resultType="com.example.demo.entity.Book" parameterType="java.lang.Integer">
+        select
+            b.category
+        from
+            books b
+                join borrow_records br on
+                b.id = br.book_id
+        where
+            br.user_id = #{userId}
+        group by
+            b.category
+        order by
+            count(1) desc
+            limit 3
+    </select>
+
+    <select id="getRecommendBooks" resultType="com.example.demo.entity.Book">
+        select
+        <include refid="Base_Column_List"/>
+        from
+            books b
+        where
+            b.category in
+            <foreach collection="categories" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+          and not exists (
+            select
+                1
+            from
+                borrow_records br
+            where
+                br.user_id = #{userId}
+              and br.book_id = b.id)
+          and b.available_copies > 0
+        order by
+            (b.total_copies - b.available_copies)
+    </select>
+
+
     <!-- 更新书籍 -->
     <update id="updateBookCopies" parameterType="com.example.demo.entity.Book">
         UPDATE books

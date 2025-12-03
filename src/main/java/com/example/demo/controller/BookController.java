@@ -47,4 +47,13 @@ public class BookController {
         Book bookById = bookService.getBookById(id);
         return ResponseEntity.ok(bookById);
     }
+
+    @GetMapping("/recommend/{id}")
+    public ResponseEntity<List<Book>> getRecommendBook(@PathVariable Integer id) {
+        List<Book> books = bookService.recommendBooks(id);
+        if (books.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(books);
+    }
 }

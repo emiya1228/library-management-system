@@ -29,4 +29,8 @@ public interface BookMapper {
      * 直接增加库存
      */
     int increaseAvailableCopies(Integer bookId, Integer count);
+
+    List<Book> getCategoryByUserId(Integer userId);
+
+    List<Book> getRecommendBooks(List<String> categories, Integer userId);
 }

@@ -3,19 +3,24 @@ package com.example.demo.service;
 import com.example.demo.constant.Constants;
 import com.example.demo.entity.Book;
 import com.example.demo.entity.BorrowRecord;
+import com.example.demo.entity.Fine;
 import com.example.demo.entity.User;
 import com.example.demo.exception.ServiceException;
 import com.example.demo.mapper.BookMapper;
 import javax.annotation.Resource;
 import com.example.demo.mapper.BorrowRecordsMapper;
+import com.example.demo.mapper.FineMapper;
 import com.example.demo.mapper.UserMapper;
+import com.example.demo.utils.RedisUtil;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,9 +37,12 @@ public class BorrowService {
 
     @Resource
     private BookMapper bookMapper;
-
+    @Resource
+    private FineMapper fineMapper;
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private RedisUtil redisUtil;
     private final Map<Integer, Object> bookLocks = new ConcurrentHashMap<>();
     // 业务规则常量
     private static final int MAX_BORROW_COUNT = 5;
@@ -127,6 +135,7 @@ public class BorrowService {
         }
         borrowRecord.setStatus("已归还");
         borrowRecord.setReturnDate(LocalDate.now());
+
         Object lock = bookLocks.computeIfAbsent(bookId, k -> new Object());
 
         synchronized (lock) {
@@ -140,6 +149,16 @@ public class BorrowService {
             int updateResult = bookMapper.increaseAvailableCopies(bookId, 1);
             if (updateResult <= 0) {
                 throw new ServiceException("更新图书库存失败", 50002);
+            }
+            if (borrowRecord.getReturnDate().isAfter(borrowRecord.getDueDate())) {
+                Fine fine = new Fine();
+                fine.setUserId(userId);
+                fine.setBorrowRecordId(recordId);
+                fine.setStatus(Constants.STATUS_UNPAID);
+                fine.setCreateTime(LocalDateTime.now());
+                fine.setAmount(ChronoUnit.DAYS.between(borrowRecord.getDueDate(), borrowRecord.getReturnDate()));
+                fine.setId(redisUtil.incr(Constants.FINE, 1));
+                fineMapper.insert(fine);
             }
         }
         borrowRecordsMapper.update(borrowRecord);

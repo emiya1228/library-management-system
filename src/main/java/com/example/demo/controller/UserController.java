@@ -14,9 +14,12 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestParam String username,@RequestParam String password) {
-        userService.login(username, password);
-        return ResponseEntity.ok().body(null);
+    public ResponseEntity<?> login(@RequestParam String username,@RequestParam String password) {
+        String login = userService.login(username, password);
+        if (login != null) {
+            return ResponseEntity.ok().body(login);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/register")

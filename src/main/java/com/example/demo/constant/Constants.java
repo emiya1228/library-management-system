@@ -124,6 +124,11 @@ public class Constants
      * 自动识别json对象白名单配置（仅允许解析的包名，范围越小越安全）
      */
     public static final String STATUS_BORROW = "借阅中";
+    // 状态常量
+    public static final Integer STATUS_UNPAID = 0;
+    public static final Integer STATUS_PAID = 1;
+
+    public static final String FINE = "FINE";
 
     /**
      * 定时任务白名单配置（仅允许访问的包名，如其他需要可以自行添加）

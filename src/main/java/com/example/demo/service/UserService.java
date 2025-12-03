@@ -5,17 +5,24 @@ import com.example.demo.entity.User;
 import com.example.demo.exception.ServiceException;
 import com.example.demo.mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService {
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
 
-    public void login(String username, String password) {
+    public String login(String username, String password) {
         if (StringUtils.isAnyBlank(username, password))
         {
             throw new ServiceException("用户/密码必须填写");
@@ -37,6 +44,19 @@ public class UserService {
         user.setLoginStatus(Constants.LOGIN_STATUS_I);
         user.setLastLoginTime(LocalDateTime.now());
         userMapper.update(user);
+
+        String token = UUID.randomUUID().toString().replace("-", "");
+
+        String sessionKey = "session:" + token;
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("userId", user.getId());
+        sessionData.put("username", user.getUsername());
+        sessionData.put("role", user.getRole());
+        sessionData.put("loginTime", System.currentTimeMillis());
+
+        redisTemplate.opsForHash().putAll(sessionKey, sessionData);
+        redisTemplate.expire(sessionKey, 30, TimeUnit.MINUTES);
+        return token;
     }
 
     public void register(User user) {

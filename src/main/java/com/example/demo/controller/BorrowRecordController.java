@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 
+import com.example.demo.config.UserContext;
 import com.example.demo.entity.BorrowRecord;
 import com.example.demo.service.BorrowService;
 import org.apache.ibatis.annotations.Param;
@@ -23,7 +24,8 @@ public class BorrowRecordController {
      */
     @PostMapping
     public ResponseEntity<?> borrowBook(@RequestBody @Validated BorrowRecord in) {
-        BorrowRecord borrowRecord = borrowService.borrowBook(in.getUserId(), in.getBookId());
+        Integer currentUserId = UserContext.getCurrentUserId();
+        BorrowRecord borrowRecord = borrowService.borrowBook(currentUserId, in.getBookId());
         return new ResponseEntity<>(borrowRecord, HttpStatus.OK);
     }
 
@@ -32,7 +34,8 @@ public class BorrowRecordController {
      */
     @PutMapping("/return")
     public ResponseEntity<?> returnBook(@RequestBody @Validated BorrowRecord in) {
-        BorrowRecord borrowRecord = borrowService.returnBook(in.getUserId(), in.getId(), in.getBookId());
+        Integer currentUserId = UserContext.getCurrentUserId();
+        BorrowRecord borrowRecord = borrowService.returnBook(currentUserId, in.getId(), in.getBookId());
         return new ResponseEntity<>(borrowRecord, HttpStatus.OK);
     }
 

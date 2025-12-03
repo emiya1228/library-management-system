@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class BookService {
     @Resource
@@ -55,4 +58,19 @@ public class BookService {
     public boolean updateBookCopies(Integer bookId, Integer change){
         return bookMapper.updateBookCopies(bookId, change);
     };
+
+    public List<Book> recommendBooks (Integer userId){
+        //获取该用户借阅最多的三种类别
+        List<Book> categoryByUserId = bookMapper.getCategoryByUserId(userId);
+        if (categoryByUserId == null) {
+            return new ArrayList<>();
+        }
+        List<String> categories = categoryByUserId.stream().map(Book::getCategory).collect(Collectors.toList());
+        //获取该用户指定类别里没看过的且库存里还有的最热门的书
+        List<Book> recommendBooks = bookMapper.getRecommendBooks(categories, userId);
+        if (recommendBooks == null) {
+            return new ArrayList<>();
+        }
+        return recommendBooks;
+    }
 }
